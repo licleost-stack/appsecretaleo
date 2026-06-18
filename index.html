@@ -1,0 +1,132 @@
+
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Decodificador Secreto</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: #f4f6f9;
+            color: #333;
+            margin: 0;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+        }
+        .container {
+            max-width: 450px;
+            width: 100%;
+            background: white;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        }
+        h1 { text-align: center; color: #1e293b; margin-bottom: 5px; }
+        p.subtitle { text-align: center; color: #64748b; margin-top: 0; font-size: 14px; }
+        .tabs { display: flex; margin-bottom: 20px; border-bottom: 2px solid #e2e8f0; }
+        .tab { flex: 1; text-align: center; padding: 10px; cursor: pointer; color: #64748b; font-weight: bold; }
+        .tab.active { color: #2563eb; border-bottom: 2px solid #2563eb; }
+        .panel { display: none; }
+        .panel.active { display: block; }
+        label { display: block; margin-top: 15px; font-weight: 600; font-size: 14px; color: #475569; }
+        input[type="text"], input[type="number"] {
+            width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-size: 16px;
+        }
+        button {
+            width: 100%; padding: 12px; margin-top: 20px; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.2s;
+        }
+        .btn-descifrar { background-color: #2563eb; color: white; }
+        .btn-descifrar:hover { background-color: #1d4ed8; }
+        .btn-encriptar { background-color: #475569; color: white; }
+        .btn-encriptar:hover { background-color: #334155; }
+        .result { margin-top: 20px; padding: 15px; border-radius: 6px; font-weight: bold; word-break: break-all; }
+        .result.success { background-color: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+        .result.info { background-color: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>🔐 Mensajes Secretos</h1>
+    <p class="subtitle">Escribí el texto, la clave y listo</p>
+    
+    <div class="tabs">
+        <div class="tab active" onclick="switchTab('descifrar')">🔓 Descifrar Papelito</div>
+        <div class="tab" onclick="switchTab('encriptar')">🔒 Encriptar</div>
+    </div>
+
+    <div id="panel-descifrar" class="panel active">
+        <label for="txt-descifrar">Texto del papelito:</label>
+        <input type="text" id="txt-descifrar" placeholder="Ej: MTSF">
+        
+        <label for="clave-descifrar">Número secreto (Clave):</label>
+        <input type="number" id="clave-descifrar" value="5" min="1" max="40">
+        
+        <button class="btn-descifrar" onclick="procesar('descifrar')">Descifrar Mensaje</button>
+        <div id="res-descifrar" class="result success" style="display:none;"></div>
+    </div>
+
+    <div id="panel-encriptar" class="panel">
+        <label for="txt-encriptar">Mensaje real para ella:</label>
+        <input type="text" id="txt-encriptar" placeholder="Ej: HOLA">
+        
+        <label for="clave-encriptar">Número secreto (Clave):</label>
+        <input type="number" id="clave-encriptar" value="5" min="1" max="40">
+        
+        <button class="btn-encriptar" onclick="procesar('encriptar')">Generar Código</button>
+        <div id="res-encriptar" class="result info" style="display:none;"></div>
+    </div>
+</div>
+
+<script>
+    // Lógica del alfabeto en JavaScript
+    const alfabeto = "ABCDEFGHIJKLMNÑOPQRSTUVWXYZ0123456789 ";
+
+    function switchTab(tipo) {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+        
+        if(tipo === 'descifrar') {
+            document.querySelectorAll('.tab')[0].classList.add('active');
+            document.getElementById('panel-descifrar').classList.add('active');
+        } else {
+            document.querySelectorAll('.tab')[1].classList.add('active');
+            document.getElementById('panel-encriptar').classList.add('active');
+        }
+    }
+
+    function procesar(modo) {
+        let texto = document.getElementById(`txt-${modo}`).value.toUpperCase();
+        let clave = parseInt(document.getElementById(`clave-${modo}`).value);
+        let resultadoBox = document.getElementById(`res-${modo}`);
+        
+        if (!texto) {
+            alert("Por favor, ingresá un texto.");
+            return;
+        }
+
+        if (modo === 'descifrar') {
+            clave = -clave;
+        }
+
+        let resultado = "";
+        for (let i = 0; i < texto.length; i++) {
+            let caracter = texto[i];
+            if (alfabeto.includes(caracter)) {
+                let indice = alfabeto.indexOf(caracter);
+                let nuevoIndice = (indice + clave) % alfabeto.length;
+                if (nuevoIndice < 0) nuevoIndice += alfabeto.length; // Corrige negativos en JS
+                resultado += alfabeto[nuevoIndice];
+            } else {
+                resultado += caracter;
+            }
+        }
+
+        resultadoBox.innerText = modo === 'descifrar' ? `Mensaje real: ${resultado}` : `Para el papelito: ${resultado}`;
+        resultadoBox.style.display = "block";
+    }
+</script>
+</body>
+</html>
