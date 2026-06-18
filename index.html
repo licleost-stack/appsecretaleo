@@ -3,7 +3,8 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Decodificador Secreto</title>
+    <title>Decodificador Secreto QR</title>
+    <script src="https://unpkg.com/html5-qrcode"></script>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -34,44 +35,53 @@
             width: 100%; padding: 10px; margin-top: 5px; border: 1px solid #cbd5e1; border-radius: 6px; box-sizing: border-box; font-size: 16px;
         }
         button {
-            width: 100%; padding: 12px; margin-top: 20px; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.2s;
+            width: 100%; padding: 12px; margin-top: 10px; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.2s;
         }
         .btn-descifrar { background-color: #2563eb; color: white; }
-        .btn-descifrar:hover { background-color: #1d4ed8; }
         .btn-encriptar { background-color: #475569; color: white; }
-        .btn-encriptar:hover { background-color: #334155; }
+        .btn-camara { background-color: #10b981; color: white; }
         .result { margin-top: 20px; padding: 15px; border-radius: 6px; font-weight: bold; word-break: break-all; }
-        .result.success { background-color: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
+        .result.success { background-color: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; font-size: 18px; text-align: center; }
         .result.info { background-color: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
+        #reader { width: 100%; max-width: 350px; margin: 15px auto; border-radius: 8px; overflow: hidden; display: none; }
+        #status-qr { text-align: center; font-weight: bold; color: #10b981; margin-top: 10px; }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h1>🔐 Mensajes Secretos</h1>
-    <p class="subtitle">Escribí el texto, la clave y listo</p>
+    <h1>🔐 Mensajes Secretos QR</h1>
+    <p class="subtitle">Encriptá tu texto y descifralo con la cámara</p>
     
     <div class="tabs">
-        <div class="tab active" onclick="switchTab('encriptar')">🔒 Encriptar (Crear Papelito)</div>
+        <div class="tab active" onclick="switchTab('encriptar')">🔒 Encriptar</div>
         <div class="tab" onclick="switchTab('descifrar')">🔓 Descifrar Papelito</div>
     </div>
 
     <div id="panel-encriptar" class="panel active">
         <label for="txt-encriptar">Mensaje real para ella:</label>
-        <input type="text" id="txt-encriptar" placeholder="Ej: HOLA">
+        <input type="text" id="txt-encriptar" placeholder="Ej: COMPRO ASADO Y VOY">
         
         <label for="clave-encriptar">Número secreto (Clave):</label>
         <input type="number" id="clave-encriptar" value="5" min="1" max="40">
         
         <button class="btn-encriptar" onclick="procesar('encriptar')">Generar Código</button>
         <div id="res-encriptar" class="result info" style="display:none;"></div>
+        
+        <div id="qr-link-box" style="margin-top:15px; display:none; text-align:center;">
+            <p style="font-size:13px; color:#64748b; margin-bottom:5px;">Para hacer el papelito, podés crear el QR tocando acá:</p>
+            <a id="qr-download-link" target="_blank" style="color:#2563eb; font-weight:bold; text-decoration:none;">🔗 Ver o Guardar Imagen QR</a>
+        </div>
     </div>
 
     <div id="panel-descifrar" class="panel">
-        <label for="txt-descifrar">Texto del papelito:</label>
-        <input type="text" id="txt-descifrar" placeholder="Ej: MTSF">
+        <label>Escanear Código QR del papelito:</label>
+        <button class="btn-camara" id="btn-toggle-camara" onclick="toggleEscaneo()">📷 Encender Cámara QR</button>
         
-        <label for="clave-descifrar">Número secreto (Clave):</label>
+        <div id="reader"></div>
+        <div id="status-qr"></div>
+
+        <input type="hidden" id="txt-descifrar"> <label for="clave-descifrar">Número secreto (Clave):</label>
         <input type="number" id="clave-descifrar" value="5" min="1" max="40">
         
         <button class="btn-descifrar" onclick="procesar('descifrar')">Descifrar Mensaje</button>
@@ -81,10 +91,12 @@
 
 <script>
     const alfabeto = "ABCDEFGHIJKLMNÑOPQRSTUVWXYZ0123456789 ";
+    let html5QrcodeScanner = null;
 
     function switchTab(tipo) {
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+        detenerEscaneo();
         
         if(tipo === 'encriptar') {
             document.querySelectorAll('.tab')[0].classList.add('active');
@@ -95,13 +107,49 @@
         }
     }
 
+    // --- Lógica del Escáner QR ---
+    function toggleEscaneo() {
+        if (html5QrcodeScanner) {
+            detenerEscaneo();
+        } else {
+            document.getElementById('reader').style.display = 'block';
+            document.getElementById('status-qr').innerText = "Buscando código QR...";
+            
+            html5QrcodeScanner = new Html5Qrcode("reader");
+            html5QrcodeScanner.start(
+                { facingMode: "environment" }, // Usa cámara trasera
+                { fps: 10, qrbox: { width: 250, height: 250 } },
+                (decodedText) => {
+                    // Si encuentra un QR con éxito:
+                    document.getElementById('txt-descifrar').value = decodedText;
+                    document.getElementById('status-qr').innerText = "¡QR Escaneado con éxito!";
+                    detenerEscaneo();
+                },
+                (errorMessage) => { /* Silenciar errores de escaneo constante */ }
+            ).catch(err => {
+                alert("Error al abrir la cámara. Asegurate de darle permisos.");
+                detenerEscaneo();
+            });
+        }
+    }
+
+    function detenerEscaneo() {
+        if (html5QrcodeScanner) {
+            html5QrcodeScanner.stop().then(() => {
+                html5QrcodeScanner = null;
+                document.getElementById('reader').style.display = 'none';
+            }).catch(err => console.log(err));
+        }
+    }
+
+    // --- Lógica de Cifrado ---
     function procesar(modo) {
         let texto = document.getElementById(`txt-${modo}`).value.toUpperCase();
         let clave = parseInt(document.getElementById(`clave-${modo}`).value);
         let resultadoBox = document.getElementById(`res-${modo}`);
         
         if (!texto) {
-            alert("Por favor, ingresá un texto.");
+            alert(modo === 'descifrar' ? "Por favor, escaneá primero el QR." : "Por favor, ingresá un texto.");
             return;
         }
 
@@ -122,8 +170,18 @@
             }
         }
 
-        resultadoBox.innerText = modo === 'descifrar' ? `Mensaje real: ${resultado}` : `Para el papelito: ${resultado}`;
-        resultadoBox.style.display = "block";
+        if (modo === 'descifrar') {
+            resultadoBox.innerHTML = `💌 Mensaje real:<br><strong style="font-size:22px;">${resultado}</strong>`;
+            resultadoBox.style.display = "block";
+        } else {
+            resultadoBox.innerText = `Código encriptado: ${resultado}`;
+            resultadoBox.style.display = "block";
+            
+            // Genera una URL de una API gratuita para crear la imagen QR del código encriptado
+            let urlQR = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(resultado)}`;
+            document.getElementById('qr-download-link').href = urlQR;
+            document.getElementById('qr-link-box').style.display = "block";
+        }
     }
 </script>
 </body>
