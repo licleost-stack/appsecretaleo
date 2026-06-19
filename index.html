@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Decodificador Secreto</title>
+    <title>Mensajes Secretos</title>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
@@ -37,11 +37,8 @@
             width: 100%; padding: 12px; margin-top: 20px; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.2s;
         }
         .btn-descifrar { background-color: #2563eb; color: white; }
-        .btn-descifrar:hover { background-color: #1d4ed8; }
         .btn-encriptar { background-color: #475569; color: white; }
-        .btn-encriptar:hover { background-color: #334155; }
         .btn-copiar { background-color: #10b981; color: white; margin-top: 10px; padding: 8px; font-size: 14px; }
-        .btn-copiar:hover { background-color: #059669; }
         .result { margin-top: 20px; padding: 15px; border-radius: 6px; font-weight: bold; word-break: break-all; }
         .result.success { background-color: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
         .result.info { background-color: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
@@ -118,7 +115,6 @@
         }
 
         let clave = parseInt(claveRaw);
-
         if (modo === 'descifrar') {
             clave = -clave;
         }
@@ -126,4 +122,35 @@
         let resultado = "";
         for (let i = 0; i < texto.length; i++) {
             let caracter = texto[i];
-            if (
+            if (alfabeto.includes(caracter)) {
+                let indice = alfabeto.indexOf(caracter);
+                let nuevoIndice = (indice + clave) % alfabeto.length;
+                if (nuevoIndice < 0) nuevoIndice += alfabeto.length;
+                resultado += alfabeto[nuevoIndice];
+            } else {
+                resultado += caracter;
+            }
+        }
+
+        if (modo === 'descifrar') {
+            resultadoBox.innerText = `Mensaje real: ${resultado}`;
+            resultadoBox.style.display = "block";
+        } else {
+            codigoGenerado = resultado;
+            resultadoBox.innerText = `Para el papelito: ${resultado}`;
+            document.getElementById('box-resultado-encriptar').style.display = "block";
+            document.getElementById('btn-copiar').innerText = "📋 Copiar Código";
+        }
+    }
+
+    function copiarAlPortapapeles() {
+        if (!codigoGenerado) return;
+        navigator.clipboard.writeText(codigoGenerado).then(() => {
+            document.getElementById('btn-copiar').innerText = "✅ ¡Copiado!";
+        }).catch(err => {
+            alert("No se pudo copiar.");
+        });
+    }
+</script>
+</body>
+</html>
