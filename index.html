@@ -41,10 +41,11 @@
         .btn-encriptar { background-color: #475569; color: white; }
         .btn-encriptar:hover { background-color: #334155; }
         .btn-copiar { background-color: #10b981; color: white; margin-top: 10px; padding: 8px; font-size: 14px; width: 100%; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
-        .btn-copiar:hover { background-color: #059669; }
         .result { margin-top: 20px; padding: 15px; border-radius: 6px; font-weight: bold; word-break: break-all; }
         .result.success { background-color: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
         .result.info { background-color: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
+        .result.danger { background-color: #fee2e2; color: #b91c1c; border: 1px solid #fca5a5; text-align: center; }
+        #timer { font-size: 13px; color: #ef4444; margin-top: 8px; font-weight: normal; text-align: right; }
     </style>
 </head>
 <body>
@@ -81,17 +82,26 @@
         <input type="number" id="clave-descifrar" placeholder="Ej: 7" min="1" max="40">
         
         <button class="btn-descifrar" onclick="procesar('descifrar')">Descifrar Mensaje</button>
-        <div id="res-descifrar" class="result success" style="display:none;"></div>
+        
+        <div id="box-resultado-descifrar" style="display:none;">
+            <div id="res-descifrar" class="result success"></div>
+            <div id="timer"></div>
+        </div>
     </div>
 </div>
 
 <script>
     const alfabeto = "ABCDEFGHIJKLMNÑOPQRSTUVWXYZ0123456789 ";
     let textoParaCopiar = "";
+    let cuentaRegresiva = null; // Para controlar el reloj de la autodestrucción
 
     function switchTab(tipo) {
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
         document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+        
+        // Si cambia de pestaña, frena cualquier contador que esté corriendo
+        if (cuentaRegresiva) clearInterval(cuentaRegresiva);
+        document.getElementById('box-resultado-descifrar').style.display = "none";
         
         if(tipo === 'encriptar') {
             document.querySelectorAll('.tab')[0].classList.add('active');
@@ -105,7 +115,6 @@
     function procesar(modo) {
         let texto = document.getElementById(`txt-${modo}`).value.toUpperCase();
         let claveRaw = document.getElementById(`clave-${modo}`).value;
-        let resultadoBox = document.getElementById(`res-${modo}`);
         
         if (!texto) {
             alert("Por favor, ingresá un texto.");
@@ -136,11 +145,39 @@
         }
 
         if (modo === 'descifrar') {
-            resultadoBox.innerText = `Mensaje real: ${resultado}`;
-            resultadoBox.style.display = "block";
+            // Frenamos cualquier contador viejo si existía
+            if (cuentaRegresiva) clearInterval(cuentaRegresiva);
+            
+            let resBox = document.getElementById('res-descifrar');
+            let timerBox = document.getElementById('timer');
+            
+            // Devolvemos el estilo verde de éxito por si estaba en rojo de destruido
+            resBox.className = "result success";
+            resBox.innerText = `Mensaje real: ${resultado}`;
+            document.getElementById('box-resultado-descifrar').style.display = "block";
+            
+            // Arranca la cuenta regresiva de 10 segundos
+            let segundos = 10;
+            timerBox.innerText = `⏳ Autodestrucción en ${segundos} segundos...`;
+            
+            cuentaRegresiva = setInterval(() => {
+                segundos--;
+                if (segundos > 0) {
+                    timerBox.innerText = `⏳ Autodestrucción en ${segundos} segundos...`;
+                } else {
+                    clearInterval(cuentaRegresiva);
+                    resBox.className = "result danger";
+                    resBox.innerText = "💥 MENSAJE AUTODESTRUIDO 💥";
+                    timerBox.innerText = "";
+                    // Limpia el cuadro de texto del papelito por seguridad
+                    document.getElementById('txt-descifrar').value = "";
+                }
+            }, 1000);
+
         } else {
             textoParaCopiar = resultado;
-            resultadoBox.innerText = `Para el papelito: ${resultado}`;
+            let resEncriptar = document.getElementById('res-encriptar');
+            resEncriptar.innerText = `Para el papelito: ${resultado}`;
             document.getElementById('box-resultado-encriptar').style.display = "block";
             document.getElementById('btn-copiar').innerText = "📋 Copiar Código";
         }
@@ -151,7 +188,7 @@
         navigator.clipboard.writeText(textoParaCopiar).then(() => {
             document.getElementById('btn-copiar').innerText = "✅ ¡Copiado!";
         }).catch(err => {
-            alert("No se pudo copiar de forma automática.");
+            alert("No se pudo copiar.");
         });
     }
 </script>
