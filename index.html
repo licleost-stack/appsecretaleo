@@ -63,7 +63,7 @@
         <input type="text" id="txt-encriptar" placeholder="Ej: HOLA">
         
         <label for="clave-encriptar">Número secreto (Clave):</label>
-        <input type="number" id="clave-encriptar" value="5" min="1" max="40">
+        <input type="number" id="clave-encriptar" placeholder="Ej: 7" min="1" max="40">
         
         <button class="btn-encriptar" onclick="procesar('encriptar')">Generar Código</button>
         
@@ -78,7 +78,7 @@
         <input type="text" id="txt-descifrar" placeholder="Ej: MTSF">
         
         <label for="clave-descifrar">Número secreto (Clave):</label>
-        <input type="number" id="clave-descifrar" value="5" min="1" max="40">
+        <input type="number" id="clave-descifrar" placeholder="Ej: 7" min="1" max="40">
         
         <button class="btn-descifrar" onclick="procesar('descifrar')">Descifrar Mensaje</button>
         <div id="res-descifrar" class="result success" style="display:none;"></div>
@@ -87,7 +87,7 @@
 
 <script>
     const alfabeto = "ABCDEFGHIJKLMNÑOPQRSTUVWXYZ0123456789 ";
-    let codigoGenerado = ""; // Variable para guardar el código a copiar
+    let codigoGenerado = "";
 
     function switchTab(tipo) {
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -104,13 +104,20 @@
 
     function procesar(modo) {
         let texto = document.getElementById(`txt-${modo}`).value.toUpperCase();
-        let clave = parseInt(document.getElementById(`clave-${modo}`).value);
+        let claveRaw = document.getElementById(`clave-${modo}`).value;
         let resultadoBox = document.getElementById(`res-${modo}`);
         
         if (!texto) {
             alert("Por favor, ingresá un texto.");
             return;
         }
+        
+        if (!claveRaw) {
+            alert("Por favor, ingresá el número secreto (Clave).");
+            return;
+        }
+
+        let clave = parseInt(claveRaw);
 
         if (modo === 'descifrar') {
             clave = -clave;
@@ -119,38 +126,4 @@
         let resultado = "";
         for (let i = 0; i < texto.length; i++) {
             let caracter = texto[i];
-            if (alfabeto.includes(caracter)) {
-                let indice = alfabeto.indexOf(caracter);
-                let nuevoIndice = (indice + clave) % alfabeto.length;
-                if (nuevoIndice < 0) nuevoIndice += alfabeto.length;
-                resultado += alfabeto[nuevoIndice];
-            } else {
-                resultado += caracter;
-            }
-        }
-
-        if (modo === 'descifrar') {
-            resultadoBox.innerText = `Mensaje real: ${resultado}`;
-            resultadoBox.style.display = "block";
-        } else {
-            codigoGenerado = resultado; // Guardamos el texto para el botón copiar
-            resultadoBox.innerText = `Para el papelito: ${resultado}`;
-            document.getElementById('box-resultado-encriptar').style.display = "block";
-            document.getElementById('btn-copiar').innerText = "📋 Copiar Código"; // Resetea el texto del botón
-        }
-    }
-
-    // Función para copiar directo en el portapapeles del celular
-    function copiarAlPortapapeles() {
-        if (!codigoGenerado) return;
-        
-        navigator.clipboard.writeText(codigoGenerado).then(() => {
-            let boton = document.getElementById('btn-copiar');
-            boton.innerText = "✅ ¡Copiado!";
-        }).catch(err => {
-            alert("No se pudo copiar automáticamente.");
-        });
-    }
-</script>
-</body>
-</html>
+            if (
