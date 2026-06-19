@@ -37,8 +37,11 @@
             width: 100%; padding: 12px; margin-top: 20px; border: none; border-radius: 6px; font-size: 16px; font-weight: bold; cursor: pointer; transition: 0.2s;
         }
         .btn-descifrar { background-color: #2563eb; color: white; }
+        .btn-descifrar:hover { background-color: #1d4ed8; }
         .btn-encriptar { background-color: #475569; color: white; }
-        .btn-copiar { background-color: #10b981; color: white; margin-top: 10px; padding: 8px; font-size: 14px; }
+        .btn-encriptar:hover { background-color: #334155; }
+        .btn-copiar { background-color: #10b981; color: white; margin-top: 10px; padding: 8px; font-size: 14px; width: 100%; border: none; border-radius: 6px; font-weight: bold; cursor: pointer; }
+        .btn-copiar:hover { background-color: #059669; }
         .result { margin-top: 20px; padding: 15px; border-radius: 6px; font-weight: bold; word-break: break-all; }
         .result.success { background-color: #dcfce7; color: #15803d; border: 1px solid #bbf7d0; }
         .result.info { background-color: #e0f2fe; color: #0369a1; border: 1px solid #bae6fd; }
@@ -84,7 +87,7 @@
 
 <script>
     const alfabeto = "ABCDEFGHIJKLMNÑOPQRSTUVWXYZ0123456789 ";
-    let codigoGenerado = "";
+    let textoParaCopiar = "";
 
     function switchTab(tipo) {
         document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
@@ -136,7 +139,7 @@
             resultadoBox.innerText = `Mensaje real: ${resultado}`;
             resultadoBox.style.display = "block";
         } else {
-            codigoGenerado = resultado;
+            textoParaCopiar = resultado;
             resultadoBox.innerText = `Para el papelito: ${resultado}`;
             document.getElementById('box-resultado-encriptar').style.display = "block";
             document.getElementById('btn-copiar').innerText = "📋 Copiar Código";
@@ -144,11 +147,11 @@
     }
 
     function copiarAlPortapapeles() {
-        if (!codigoGenerado) return;
-        navigator.clipboard.writeText(codigoGenerado).then(() => {
+        if (!textoParaCopiar) return;
+        navigator.clipboard.writeText(textoParaCopiar).then(() => {
             document.getElementById('btn-copiar').innerText = "✅ ¡Copiado!";
         }).catch(err => {
-            alert("No se pudo copiar.");
+            alert("No se pudo copiar de forma automática.");
         });
     }
 </script>
